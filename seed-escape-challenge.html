@@ -1,0 +1,117 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Seed Escape Challenge</title>
+  <style>
+    :root { --ink:#173029; --cream:#fff9e9; --leaf:#2c684b; --lime:#c8e87a; --sky:#bfe6ed; --sun:#ffbf4d; --coral:#eb785f; --paper:#ffffff; }
+    * { box-sizing:border-box; }
+    body { margin:0; background:linear-gradient(135deg,#e8f3d7 0%,#fdf6df 55%,#d9eef0 100%); color:var(--ink); font-family:Arial,Helvetica,sans-serif; min-height:100vh; }
+    main { max-width:1050px; margin:auto; padding:28px 18px 42px; }
+    header { display:grid; grid-template-columns:1fr auto; gap:16px; align-items:start; margin-bottom:20px; }
+    h1 { font-size:clamp(2rem,5vw,4rem); letter-spacing:-.06em; line-height:.92; margin:0; }
+    h2 { margin:0 0 8px; font-size:1.55rem; }
+    h3 { margin:0 0 8px; }
+    p { line-height:1.45; }
+    .tag { display:inline-block; margin:10px 0 0; padding:6px 11px; border-radius:999px; background:var(--sun); font-weight:700; }
+    .clock { background:var(--ink); color:white; padding:12px 16px; border-radius:16px; text-align:center; min-width:126px; font-weight:700; }
+    .clock strong { display:block; font-size:1.8rem; letter-spacing:.04em; }
+    .progress { height:12px; background:#ffffff99; border-radius:999px; overflow:hidden; margin:14px 0 24px; }
+    .progress div { height:100%; width:0; background:var(--leaf); transition:width .3s; }
+    .game { display:none; background:var(--paper); border-radius:24px; padding:clamp(18px,4vw,34px); box-shadow:0 14px 35px #2c684b24; }
+    .game.active { display:block; animation:up .35s ease; }
+    @keyframes up { from{opacity:0;transform:translateY(10px)} to{opacity:1;transform:translateY(0)} }
+    .brief { background:var(--cream); border-left:7px solid var(--sun); padding:12px 16px; border-radius:10px; margin:14px 0 20px; }
+    .choices { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:12px; }
+    button.choice, .next { border:0; font:inherit; cursor:pointer; color:var(--ink); }
+    button.choice { text-align:left; padding:16px; border-radius:16px; background:#f0f7e6; font-weight:700; min-height:82px; transition:transform .15s,background .15s; }
+    button.choice:hover { transform:translateY(-2px); background:var(--lime); }
+    button.choice:disabled { cursor:default; }
+    .choice.correct { background:#b8e7bb; outline:3px solid var(--leaf); }
+    .choice.wrong { background:#ffd0c7; outline:3px solid var(--coral); }
+    .feedback { min-height:28px; margin:14px 0; font-weight:700; }
+    .next { display:none; background:var(--leaf); color:white; padding:12px 17px; border-radius:12px; font-weight:700; }
+    .next.show { display:inline-block; }
+    .case-grid { display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:12px; }
+    .case { border:2px solid #d7e4d7; background:#fbfdf7; border-radius:16px; padding:13px; }
+    .case .emoji { font-size:2.2rem; }
+    .case select { width:100%; margin-top:9px; padding:8px; border-radius:8px; border:1px solid #b8cdbd; background:white; color:var(--ink); font:inherit; }
+    textarea { width:100%; min-height:84px; font:inherit; border:2px solid #d7e4d7; border-radius:12px; padding:10px; margin-top:8px; }
+    .submit { background:var(--sun); border:0; border-radius:12px; padding:12px 16px; cursor:pointer; font:inherit; font-weight:700; margin-top:13px; }
+    .result { background:var(--sky); padding:18px; border-radius:16px; margin-top:16px; display:none; }
+    .result.show { display:block; }
+    .mission { display:grid; grid-template-columns:1.1fr .9fr; gap:20px; align-items:center; }
+    .map { min-height:245px; border-radius:20px; background:linear-gradient(160deg,#bfe6ed 0 38%,#d2e79a 38% 70%,#e9bd6f 70%); position:relative; overflow:hidden; }
+    .spot { position:absolute; font-size:2.2rem; filter:drop-shadow(0 3px 1px #0002); }
+    .spot:nth-child(1){top:14%;left:11%}.spot:nth-child(2){top:51%;left:67%}.spot:nth-child(3){top:72%;left:21%}.spot:nth-child(4){top:22%;right:13%}
+    .score { font-size:2.4rem; font-weight:800; color:var(--leaf); }
+    .small { color:#50665d; font-size:.94rem; }
+    @media (max-width:650px) { header,.mission{grid-template-columns:1fr}.clock{width:max-content}.choices,.case-grid{grid-template-columns:1fr 1fr}.case{font-size:.9rem} }
+  </style>
+</head>
+<body>
+<main>
+  <header>
+    <div>
+      <h1>Seed Escape<br>Challenge</h1>
+      <span class="tag">15-minute science mission</span>
+    </div>
+    <div class="clock" aria-label="Activity timer"><span>TIME LEFT</span><strong id="timer">15:00</strong><button id="startTimer" class="submit">Start timer</button></div>
+  </header>
+  <div class="progress" aria-label="Mission progress"><div id="progress"></div></div>
+
+  <section class="game active" id="game1">
+    <div class="mission"><div><h2>Mission 1: Choose the escape kit</h2><p class="small">A seed needs to get away from its parent plant, where it will face less competition and may colonise a new place. Choose the feature that gives each seed its best chance.</p><div class="brief" id="brief"></div><div class="choices" id="choices"></div><div class="feedback" id="feedback" aria-live="polite"></div><button class="next" id="next1">Next mission</button></div><div class="map" aria-hidden="true"><span class="spot">🌬️</span><span class="spot">🐦</span><span class="spot">🌊</span><span class="spot">💥</span></div></div>
+  </section>
+
+  <section class="game" id="game2">
+    <h2>Mission 2: Seed detective</h2>
+    <p class="brief">Match each seed feature to its most likely way of travelling. Think about what the structure actually does.</p>
+    <div class="case-grid" id="caseGrid"></div>
+    <button class="submit" id="markCases">Check my evidence</button>
+    <div class="feedback" id="caseFeedback" aria-live="polite"></div>
+    <button class="next" id="next2">Final mission</button>
+  </section>
+
+  <section class="game" id="game3">
+    <h2>Mission 3: The survival argument</h2>
+    <p class="brief">A tawa tree’s fruit is eaten by a kererū. The seed survives the journey and lands far from the parent tree. Write a 5–7 sentence scientific explanation of <strong>how</strong> this helps the seedling. Use at least three of these words: <em>competition, dispersal, adaptation, colonise, reserves</em>. Include one possible disadvantage of this strategy.</p>
+    <textarea id="argument" placeholder="My scientific explanation..." style="min-height:150px"></textarea>
+    <button class="submit" id="finish">Finish mission</button>
+    <div class="result" id="result" aria-live="polite"></div>
+  </section>
+</main>
+<script>
+const missions=[
+ {brief:'A dry, open paddock has gusty winds. Which feature should this seed pack?', opts:['A fleshy fruit that attracts a bird','A broad wing or fluffy parachute','A waterproof fibrous husk','Tiny hooks that cling to feathers'],answer:1,why:'Yes. Wings and fluffy hairs slow a seed’s fall, giving wind more time to carry it.'},
+ {brief:'A plant grows beside a stream that floods after rain. Which feature should this seed pack?',opts:['A waterproof, buoyant covering','Tension fibres that twist as the pod dries','A sweet berry around a tough seed','A large wing'],answer:0,why:'Correct. A light, fibrous, waterproof covering helps a seed float down waterways.'},
+ {brief:'A seed needs to catch a passing kererū without being eaten. Which feature should this seed pack?',opts:['Silky hairs','Microscopic hooks or barbs','A waxy floating coat','A pod wall that dries and ruptures'],answer:1,why:'Correct. Hooks or barbs can hitchhike on fur and feathers.'},
+ {brief:'A pod needs to send seeds away without wind, water, or animals. Which feature should it use?',opts:['A juicy outer layer','A large amount of food reserve','Drying walls that build tension then burst','A fibrous waterproof husk'],answer:2,why:'Boom. Drying pod walls build tension and rupture, flinging seeds away.'},
+ {brief:'A seed has a broad, flat wing. What is the wing mainly helping it do?',opts:['Sink quickly into soil','Fall slowly and catch air currents','Survive inside an animal stomach','Stick to a mammal’s fur'],answer:1,why:'Correct. A wing increases surface area and drag, so the seed falls more slowly.'},
+ {brief:'A large seed is eaten with a berry. What feature gives it the best chance of surviving the trip through an animal?',opts:['A tough, resistant seed coat','A parachute of silky hairs','A hollow, floating husk','A pod that splits open'],answer:0,why:'Correct. A tough seed coat can protect the embryo while the fruit passes through an animal.'},
+ {brief:'A plant lives in a dense forest. Why might moving seeds away from the parent be useful?',opts:['It guarantees every seed will grow','It reduces competition for light, water and space','It stops the seed needing energy reserves','It makes the seed heavier'],answer:1,why:'Exactly. Dispersal can reduce competition with the parent plant and nearby seedlings.'},
+ {brief:'Two seeds have the same shape. One is much lighter. Which is more likely to travel farther by wind?',opts:['The lighter seed','The heavier seed','They will travel the same distance','Neither can move by wind'],answer:0,why:'Correct. Smaller, lighter seeds can often travel farther, although they have fewer food reserves.'},
+ {brief:'A seed needs to travel on the outside of a sheep. Which adaptation is least useful?',opts:['Recurved hooks','Barbs','Sticky coating','A juicy edible fruit'],answer:3,why:'Right. A juicy fruit encourages eating, while hooks, barbs and sticky coats help external hitchhiking.'},
+ {brief:'A seedling needs food while it begins growing. Which seed is most likely to have more stored reserves?',opts:['A very small dust-like seed','A larger seed','A seed with feathery hairs','A seed with tiny hooks'],answer:1,why:'Correct. Larger seeds often carry more reserves for early growth, even though they may not travel as far.'},
+ {brief:'Which statement best describes an adaptation?',opts:['Any feature a plant happens to have','A learned behaviour','An evolved feature that helps survival or reproduction','The place where a seed lands'],answer:2,why:'Correct. An adaptation is an evolved structural feature that helps an organism survive and reproduce.'},
+ {brief:'A seed is carried down a river and reaches a new riverbank. What has it potentially done?',opts:['Changed into pollen','Colonised a new niche','Stopped dispersal','Turned into a fruit'],answer:1,why:'Yes. If it establishes there, it may colonise a new niche.'}
+];
+const cases=[
+ ['🌾','Very light seed with silky hairs','Wind'],['🫐','Fleshy berry around a tough seed coat','Animal, eaten'],['🌊','Fibrous husk with a waterproof skin','Water'],['🌱','Tiny recurved hooks','Animal, hitchhiking'],['🍁','A flat papery wing','Wind'],['💥','A dry capsule with twisting tension fibres','Explosive pod'],['🪶','A sticky coating that clings to feathers','Animal, hitchhiking'],['🥥','A thick waterproof outer layer and fibrous material','Water']
+];
+let q=0, correct=0, seconds=900, ticking=false, casesMarked=false;
+const $=id=>document.getElementById(id);
+function renderQ(){let m=missions[q];$('brief').innerHTML='<strong>Situation '+(q+1)+' of '+missions.length+':</strong> '+m.brief;$('feedback').textContent='';$('next1').className='next';$('choices').innerHTML=m.opts.map((o,i)=>`<button class="choice" data-i="${i}">${o}</button>`).join('');document.querySelectorAll('.choice').forEach(b=>b.onclick=()=>answer(+b.dataset.i,b,m));}
+function answer(i,b,m){document.querySelectorAll('.choice').forEach(x=>x.disabled=true);if(i===m.answer){b.classList.add('correct');correct++;$('feedback').textContent=m.why;}else{b.classList.add('wrong');document.querySelectorAll('.choice')[m.answer].classList.add('correct');$('feedback').textContent='Not quite. '+m.why;}$('progress').style.width=((q+1)/20*100)+'%';if(q===missions.length-1){$('next1').textContent='Start Seed Detective';} $('next1').classList.add('show');}
+$('next1').onclick=()=>{if(q<missions.length-1){q++;renderQ()}else show('game2')};
+function renderCases(){$('caseGrid').innerHTML=cases.map((c,i)=>`<article class="case"><div class="emoji">${c[0]}</div><h3>Evidence ${i+1}</h3><div>${c[1]}</div><label class="small" for="case${i}">Travel method</label><select id="case${i}"><option value="">Choose…</option><option>Wind</option><option>Water</option><option>Animal, eaten</option><option>Animal, hitchhiking</option><option>Explosive pod</option></select></article>`).join('');}
+$('markCases').onclick=()=>{if(casesMarked)return;casesMarked=true;let n=cases.reduce((a,c,i)=>a+($('case'+i).value===c[2]),0);correct+=n;$('caseFeedback').textContent=`${n}/8 correct. ${n===8?'Excellent evidence reading.':'Check the structure, then ask what it helps the seed do.'}`;$('markCases').textContent='Evidence checked';$('next2').classList.add('show');$('progress').style.width='80%';};
+$('next2').onclick=()=>show('game3');
+$('finish').onclick=()=>{let text=$('argument').value.toLowerCase();let hits=['competition','dispersal','adaptation','colonise','reserves'].filter(w=>text.includes(w)).length;let sentences=(text.match(/[.!?]+/g)||[]).length;let note=hits>=3&&sentences>=5?'Strong scientific vocabulary and detail.':`Before submitting, aim for at least 5 sentences and 3 key words. You currently have ${sentences} sentence${sentences===1?'':'s'} and ${hits} key word${hits===1?'':'s'}.`;$('result').innerHTML=`<div class="score">${correct} / 20 + your argument</div><p>${note} A strong answer explains that the kererū moves the seed away from the parent, so the seedling can face less competition and possibly colonise a new place. A tough seed coat can help it survive being eaten. It also considers a disadvantage, such as relying on animals being present.</p><p><strong>Challenge extension:</strong> Which strategy might travel farthest in a storm, and why might that still be risky?</p>`;$('result').classList.add('show');$('progress').style.width='100%';};
+function show(id){document.querySelectorAll('.game').forEach(x=>x.classList.remove('active'));$(id).classList.add('active');window.scrollTo({top:0,behavior:'smooth'});}
+$('startTimer').onclick=()=>{if(ticking)return;ticking=true;$('startTimer').textContent='Timer running';let int=setInterval(()=>{seconds--;let m=String(Math.floor(seconds/60)).padStart(2,'0'),s=String(seconds%60).padStart(2,'0');$('timer').textContent=m+':'+s;if(seconds<=0){clearInterval(int);$('startTimer').textContent='Time! Finish your answer.';}},1000);};
+renderQ();renderCases();
+</script>
+</body>
+</html>
